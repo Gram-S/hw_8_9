@@ -46,16 +46,24 @@ class VerletODE:
         self.state = state
         self.Lx = Lx
         self.Ly = Ly
+        self.state['AccKE'] = 0.0
+        self.state['AccPE'] = 0.0
         self.state['KE'] = 0.0
         self.state['PE'] = 0.0
         self.N = len(state['pos'])
 
     def getMeanTemp(self, steps) -> float:
-        return self.state['KE'] / (self.N*(steps+1))
+        return self.state['AccKE'] / (self.N*(steps+1))
 
     def getMeanEnergy(self, steps) -> float:
         if (steps == 0): return 0.0
-        return self.state['KE']/steps + self.state['PE']/steps
+        return self.state['AccKE']/steps + self.state['AccPE']/steps
+
+    def getPotentialEnergy(self) -> float:
+        return self.state['PE']
+
+    def getKineticEnergy(self) -> float:
+        return self.state['KE']
 
     def integrate(self, accMethod, dt, potentialMethod=None, *args):
         """Integrates one step using Verlet ODE method with rectangular box (Lx, Ly).
@@ -82,13 +90,15 @@ class VerletODE:
         p_new[:, 1] = np.mod(p_new[:, 1] + self.Ly / 2, self.Ly) - self.Ly / 2
 
         if potentialMethod is not None:
-            self.state['PE'] += potentialMethod(p_new, self.Lx, self.Ly, *args)
+            self.state['PE'] = potentialMethod(p_new, self.Lx, self.Ly, *args)
+            self.state['AccPE'] += self.state['PE']
 
         a_new = accMethod(p_new, self.Lx, self.Ly, *args)
 
         v_new = velocities + 0.5 * (accelerations + a_new) * self.dt
 
-        self.state['KE'] += np.sum(v_new ** 2)
+        self.state['KE'] = np.sum(v_new ** 2)
+        self.state['AccKE'] += self.state['KE']
 
         self.state['pos'] = p_new
         self.state['vel'] = v_new

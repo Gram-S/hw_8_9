@@ -40,20 +40,21 @@ def initRectanglePos(Lx, nx, Ly, ny, N, startL=False):
 
     return np.array(positions)
 
-def initTriangleLatice(Lx, nx, Ly, ny, N, startL=False):
+def initTriangleLatice(Lx, nx, Ly, ny):
     half_Lx = Lx/2
     half_Ly = Ly/2
     dx = Lx/nx
     dy = Ly/ny
-    if (startL):
-        dx *= 0.5
-
     positions = []
 
     for i in range(nx):
         for j in range(ny):
-            x = dx * i - half_Lx
-            y = dy * j - half_Ly
+            y = dy * (j + 0.5) - half_Ly
+            if (j % 2 == 0):
+                x = dx * (i + 0.25) - half_Lx
+            else:
+                x = dx * (i + 0.75) - half_Lx
+
             positions.append([x, y])
 
     return np.array(positions)
@@ -74,6 +75,15 @@ def initVelocities(N, T):
     return velocities
 
 def getInitState(initialization):
+    """Gets the initial conditions for the provided problem.
+
+    Args:
+        initialization (string): Name of the desired initial conditions. Examples: 'two', 'p8.3a', ...
+
+    Returns:
+        Lx (float), Ly (float), state (dict), dt (float), invert (bool)
+    """
+
     if initialization == 'two':
         L = 2.9
         dist = 1
@@ -207,19 +217,18 @@ def getInitState(initialization):
 
     elif initialization == 'p8.9a':
         Lx = 8.0
-        Ly = 9.0
+        Ly = math.sqrt(3)*Lx/2
+        N = 64
         nx = 8
         ny = 8
-        dx = Lx / nx
-        dy = Ly / ny
         T = 1.0
         dt = 0.001
         state = {
-            'pos': initLaticePos(L, N),
+            'pos': initTriangleLatice(Lx, nx, Ly, ny),
             'vel': initVelocities(N, T)
         }
-        state['acc'] = getLennardForce(state['pos'], L, L)
-        return L, L, state, dt, True
+        state['acc'] = getLennardForce(state['pos'], Lx, Ly)
+        return Lx, Ly, state, dt, False
 
     # elif initialization == 'six':
     else:
@@ -260,13 +269,13 @@ def getInitState(initialization):
 # }
 # L = 10
 
-Lx, Ly, state, dt, invert = getInitState('p8.4c')
+Lx, Ly, state, dt, invert = getInitState('p8.9a')
 verlet = VerletODE(dt, state, Lx, Ly)
 
 fig = plt.figure(figsize=(12, 8))
 gs = fig.add_gridspec(2, 2)
 ax_pos = fig.add_subplot(gs[0, 0])
-ax_left = fig.add_subplot(gs[0, 1])
+ax_potential = fig.add_subplot(gs[0, 1])
 ax_energy = fig.add_subplot(gs[1, 0])
 ax_temp = fig.add_subplot(gs[1, 1])
 
@@ -292,13 +301,13 @@ ax_energy.set_xlim(0, 10)
 ax_energy.set_ylim(0, 10)
 
 # Particles on Left plot
-ax_left.set_title('Particles on Left vs Time')
-ax_left.set_xlabel('Time')
-ax_left.set_ylabel('Particles on Left')
-left_particles = []
-left_line, = ax_left.plot([], [], 'r-', lw=2)
-ax_left.set_xlim(0, 10)
-ax_left.set_ylim(0, state['pos'].shape[0] + 5)
+ax_potential.set_title('Potential Energy vs Time')
+ax_potential.set_xlabel('Time')
+ax_potential.set_ylabel('Potential Energy')
+potentials = []
+potential_line, = ax_potential.plot([], [], 'r-', lw=2)
+ax_potential.set_xlim(0, 10)
+ax_potential.set_ylim(0, state['pos'].shape[0] + 5)
 
 # Temperature plot
 ax_temp.set_title('Mean Temperature vs Time')
@@ -321,15 +330,15 @@ def update(frame):
     current_time = frame * dt
     current_energy = verlet.getMeanEnergy(frame)
     current_temp = verlet.getMeanTemp(frame)
-    current_left = getParticlesOnLeft(p_new)
+    current_potential = verlet.getPotentialEnergy()
 
     times.append(current_time)
     energies.append(current_energy)
     temperatures.append(current_temp)
-    left_particles.append(current_left)
+    potentials.append(current_potential)
 
     energy_line.set_data(times, energies)
-    left_line.set_data(times, left_particles)
+    potential_line.set_data(times, potentials)
     temp_line.set_data(times, temperatures)
 
     if len(times) > 5:
@@ -338,19 +347,19 @@ def update(frame):
         ax_energy.set_xlim(0, t_max)
         ax_energy.set_ylim(min(energies) * 0.98, max(energies) * 1.02)
 
-        ax_left.set_xlim(0, t_max)
-        ax_left.set_ylim(min(left_particles) * 0.98, max(left_particles) * 1.02)
+        ax_potential.set_xlim(0, t_max)
+        ax_potential.set_ylim(min(potentials) * 0.98, max(potentials) * 1.02)
 
         ax_temp.set_xlim(0, t_max)
         ax_temp.set_ylim(min(temperatures) * 0.98, max(temperatures) * 1.02)
 
-    return circles + [energy_line, left_line, temp_line]
+    return circles + [energy_line, potential_line, temp_line]
 
 
 ani = animation.FuncAnimation(
     fig, 
     update, 
-    interval=dt*100,
+    interval=dt*1000,
     blit=True,
     cache_frame_data=False
 )
