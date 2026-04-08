@@ -218,6 +218,7 @@ def getInitState(initialization):
     elif initialization == 'p8.9a':
         Lx = 8.0
         Ly = math.sqrt(3)*Lx/2
+        print("Lx, Ly | ", Lx, Ly)
         N = 64
         nx = 8
         ny = 8
@@ -229,6 +230,38 @@ def getInitState(initialization):
         }
         state['acc'] = getLennardForce(state['pos'], Lx, Ly)
         return Lx, Ly, state, dt, False
+
+    elif initialization == 'p8.9bT':
+        Lx = 9.0
+        Ly = math.sqrt(3)*Lx/2
+        print("Lx, Ly | ", Lx, Ly)
+        N = 64
+        nx = 8
+        ny = 8
+        T = 1.0
+        dt = 0.001
+        state = {
+            'pos': initTriangleLatice(Lx, nx, Ly, ny),
+            'vel': initVelocities(N, T)
+        }
+        state['acc'] = getLennardForce(state['pos'], Lx, Ly)
+        return Lx, Ly, state, dt, False
+
+    elif initialization == 'p8.9bB':
+        Lx = 9.0
+        L = math.sqrt(math.sqrt(3)*Lx**2/2)
+        print("L | ", L)
+        N = 64
+        nx = 8
+        ny = 8
+        T = 1.0
+        dt = 0.001
+        state = {
+            'pos': initRectanglePos(L, nx, L, ny, N),
+            'vel': initVelocities(N, T)
+        }
+        state['acc'] = getLennardForce(state['pos'], L, L)
+        return L, L, state, dt, False
 
     # elif initialization == 'six':
     else:
@@ -269,7 +302,7 @@ def getInitState(initialization):
 # }
 # L = 10
 
-Lx, Ly, state, dt, invert = getInitState('p8.9a')
+Lx, Ly, state, dt, invert = getInitState('p8.9bT')
 verlet = VerletODE(dt, state, Lx, Ly)
 
 fig = plt.figure(figsize=(12, 8))
@@ -331,6 +364,7 @@ def update(frame):
     current_energy = verlet.getMeanEnergy(frame)
     current_temp = verlet.getMeanTemp(frame)
     current_potential = verlet.getPotentialEnergy()
+    print(current_potential)
 
     times.append(current_time)
     energies.append(current_energy)
@@ -360,7 +394,7 @@ ani = animation.FuncAnimation(
     fig, 
     update, 
     interval=dt*1000,
-    blit=True,
+    blit=False,
     cache_frame_data=False
 )
 
