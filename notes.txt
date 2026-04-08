@@ -1,0 +1,10 @@
+Lx = 8 has a higher potential energy than Lx = 9 
+Potential energy scales with how close the particles are, particles will be closer the less area the box has
+
+Let a square lattice with distance between particles have distance L : L = sqrt(LxLy) 
+
+Overlap applies to a strong repulsive force. *Positive energy is replusive 
+
+Bigger box size means the positions of the particles (lattice) have less of an impact on the potential energy.
+
+The triangular lattice can stack particles without overlap, the square lattice possesses more negative space. 
