@@ -1,3 +1,6 @@
+The potential energy in a triangular lattice given that the height of the box is a function of the width. sqrt(3) * Lx / 2
+Then compare to the potential energy given by a square lattice of sqrt(LxLy)
+
 Lx = 8 has a higher potential energy than Lx = 9 
 Potential energy scales with how close the particles are, particles will be closer the less area the box has
 

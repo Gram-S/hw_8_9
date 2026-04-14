@@ -394,7 +394,7 @@ ani = animation.FuncAnimation(
     fig, 
     update, 
     interval=dt*1000,
-    blit=False,
+    blit=True,
     cache_frame_data=False
 )
 
